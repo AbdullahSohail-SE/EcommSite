@@ -1,0 +1,45 @@
+﻿@model Web.Models.Product
+@{
+    ViewBag.Title = "AddProduct";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+    <div class="content-header d-flex">
+        <h2 class="text-teal" style="margin-left:50%;transform:translateX(-50%)">AddProduct</h2>
+    </div>
+    <div class="content"style="width:20rem;margin-left:50%;transform:translateX(-50%)">
+
+        <!-- Modal -->
+        
+
+        @using (Html.BeginForm("AddToCart", "Product"))
+        {
+            <div style="margin-bottom:.5rem">
+                @Html.LabelFor(m => m.name, new { @class = "text-teal" })
+                @Html.TextBoxFor(m => m.name, new { @class = "form-control" })
+                @Html.ValidationMessageFor(m=>m.name)
+            </div>
+            <div style="margin-bottom:.5rem">
+                @Html.LabelFor(m => m.category, new { @class = "text-teal" })
+                @Html.TextBoxFor(m => m.category, new { @class = "form-control" })
+                @Html.ValidationMessageFor(m=>m.category)
+            </div>
+            <div style="margin-bottom:.5rem">
+                @Html.LabelFor(m => m.description, new { @class = "text-teal" })
+                @Html.TextBoxFor(m => m.description, new { @class = "form-control" })
+                @Html.ValidationMessageFor(m=>m.description)
+            </div>
+            <div style="margin-bottom:.5rem">
+                @Html.LabelFor(m => m.price, new { @class = "text-teal" })
+                @Html.TextBoxFor(m => m.price, new { @class = "form-control" })
+                @Html.ValidationMessageFor(m=>m.price)
+            </div>
+            <div >
+                <button class="btn btn-outline-success">Submit</button>
+            </div>
+        }
+    </div>
+@section scripts
+    {
+        @Scripts.Render("~/bundles/jqueryval")
+    }

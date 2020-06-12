@@ -1,0 +1,57 @@
+﻿
+<aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <!-- Brand Logo -->
+    <a href="index3.html" class="brand-link">
+        
+        <span class="brand-text font-weight-light">Producty</span>
+    </a>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <!-- Sidebar user panel (optional) -->
+        
+
+        <!-- Sidebar Menu -->
+        <nav class="mt-2">
+            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+                <!-- Add icons to the links using the .nav-icon class
+                 with font-awesome or any other icon font library -->
+             
+                <li class="nav-item">
+                    <a href=@Url.Action("AddProduct","Product") class="nav-link">
+                        <i class="nav-icon fas fa-cart-plus"></i>
+                        <p>
+                            Add Product
+                        </p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href=@Url.Action("DisplayProducts","Product")  class="nav-link">
+                        <i class="nav-icon fas fa-cart-arrow-down"></i>
+                        <p>
+                            Delete Product
+                        </p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href=@Url.Action("DisplayProducts","Product") class="nav-link">
+                        <i class="nav-icon fas fa-compact-disc"></i>
+                        <p>
+                            Display Products
+                        </p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href=@Url.Action("Search","Product")  class="nav-link">
+                        <i class="nav-icon fas fa-search"></i>
+                        <p>
+                            Search Products
+                        </p>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <!-- /.sidebar-menu -->
+    </div>
+    <!-- /.sidebar -->
+</aside>

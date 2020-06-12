@@ -1,0 +1,79 @@
+﻿
+@{
+    ViewBag.Title = "DisplayProducts";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+    <div class="content-header d-flex">
+        <h2 class="text-teal" style="margin-left:50%;transform:translateX(-50%)">Products</h2>
+    </div>
+    <div class="content">
+        <div id="data-table-div">
+            <table id="data-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Price</th>
+                        <th>Category</th>
+                        <th>Description</th>
+                        <th>Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                </tbody>
+            </table>
+        </div>
+    </div>
+@section scripts
+    {
+    <script>
+        $(function () {
+            var table=$("#data-table").DataTable({
+                ajax: {
+                    url: "GetProducts",
+                    dataSrc:""
+                },
+                columns: [
+                 
+                    {
+                        data:"name"
+                    },
+                    {
+                        data: "price"
+                    },
+                    {
+                        data: "category"
+                    },
+                    {
+                        data: "description"
+                    },
+                    {
+                        data: "product_id",
+                        render: function (data, type, product) {
+                            return `<button id="deleteProduct" data-id=${data} class='btn btn-danger'>Delete</button>`
+                        }
+                    }
+                ]
+            });
+            $("#data-table-div").on("click", (e) => {
+               
+                var id = e.target.getAttribute("data-id");
+                $.ajax({
+                    type:"delete",
+                    headers: {  'Access-Control-Allow-Origin': '*' },
+                    crossDomain: true,
+                    url: "http://localhost:50125/Product/DeleteProduct/" + id,
+                    success: function () {
+                        
+                        table.row($(e.target).parents("tr")).remove().draw();
+                    }
+                });
+
+            });
+            
+        })
+    </script>
+    
+    }
+

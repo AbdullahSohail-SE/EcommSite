@@ -1,0 +1,110 @@
+﻿
+@{
+    ViewBag.Title = "SearchProduct";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+    <div class="content-header d-flex">
+        <h2 class="text-teal" style="margin-left:50%;transform:translateX(-50%)">Search Products</h2>
+    </div>
+   
+
+    <div class="content  ">
+        <div class="input-group justify-content-center " style="margin:0 auto">
+
+            <input id="keywords"  type="search" class="form-control" placeholder="Search" aria-label="Search" />
+
+            <div  class="input-group-append">
+                <button id="search-btn" class="btn" type="submit">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+        <div id="empty-container" style="min-height:60vh" class="mt-4" >
+            <div id="empty"  style="min-height:60vh;border:2px dashed teal;" class="d-flex align-items-center justify-content-center mt-4">
+                <h4 class="font-weight-normal text-gray">No Products Searched</h4>
+            </div>
+            <div id="productContainer" class="row justify-content-center p-2">
+                
+            </div>
+        </div>
+    </div>
+@section scripts
+{
+    <script>
+        function renderCards({ category,description,name,price}) {
+        return `<div class="card mx-1 p-2 col-3">
+                    <div class="card-header">
+                        <h3 class="card-title">${name}</h3>
+                        <div class="card-tools">
+                            <!-- Buttons, labels, and many other things can be placed here! -->
+                            <!-- Here is a label for example -->
+                            <button type="button" class="btn btn-tool" data-card-widget="remove"><i class="fas fa-times"></i></button>
+                            
+                        </div>
+                        <!-- /.card-tools -->
+                    </div>
+                    <div class="card-body">
+                        <div class="card-text">
+                            <p>${description}</p>
+                        </div>
+                        <div class="row justify-content-between">
+                            <div class="bg-info px-2">
+                                <span>${price}</span>
+                            </div>
+                            <div class="bg-info px-2">
+                                <span>${category}</span>
+                            </div>
+                            
+                        </div>
+
+                    </div>
+                    
+                </div>`
+        }
+        function clearProductContainer() {
+            $("#productContainer").empty();
+        }
+        
+        $(function () {
+            $("#search-btn").on("click", function () {
+                clearProductContainer();
+                var keywords = $("#keywords");
+                console.log(keywords);
+                $.ajax({
+                    type: "get",
+                    dataType:"json",
+                    headers: {  'Access-Control-Allow-Origin': '*' },
+                    crossDomain: true,
+                    url: "http://localhost:50125/Product/SearchByKeyword",
+                    data: {
+                        keywords:$("#keywords").val()
+                    },
+                    success: function (data) {
+                        $("#keywords").val("");
+                        if (Object.keys(data).length == 0) {
+                            $("#empty").remove();
+                            $("#empty-container").append(`<div id="empty"  style="min-height:60vh;border:2px dashed teal;" class="d-flex align-items-center justify-content-center mt-4">
+                              <h4 class="font-weight-normal text-gray">Nothing Found :(</h4>
+                            </div>`);
+                            $("#productContainer").css("display", "none");
+
+                        }
+                        else {
+                        $("#productContainer").css("display", "block");
+                        $("#empty").remove();
+                      
+                        for (var index in data) {
+                            
+                            var result = renderCards(data[index]);
+                            $("#productContainer").append(result);
+                            }
+                         }
+                        
+                    }
+                })
+            });
+            
+        });
+        
+    </script>    
+}
