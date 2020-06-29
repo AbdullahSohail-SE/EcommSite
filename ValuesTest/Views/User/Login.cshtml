@@ -1,0 +1,53 @@
+﻿@model Web.Models.ViewModels.LoginViewModel
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Login</title>
+    @Styles.Render("~/Content/bootstrap")
+    @Styles.Render("~/Content/css")
+</head>
+<body>
+    <div class="container"> 
+        <div class="row align-items-center justify-content-center" style="height:100vh">
+            
+                <div class="login-custom-card row align-items-center justify-content-center" style="width:476px;height:500px">
+                   <h3 class="text-center text-teal col-12">Login</h3>
+                   <div class="row align-items-center justify-content-center col-12">
+                       @using (Html.BeginForm("AuthenticateUser", "User", FormMethod.Post))
+                       {
+                           <div class="form-group">
+                               @Html.LabelFor(m => m.Email)
+                               @Html.TextBoxFor(m => m.Email, new { @class = "form-control" })
+                               @Html.ValidationMessageFor(m=>m.Email)
+                           </div>
+            
+                           <div class="form-group">
+                               @Html.LabelFor(m => m.Password)
+                               @Html.TextBoxFor(m => m.Password, new { @class = "form-control",@type="password" })
+                               @Html.ValidationMessageFor(m=>m.Password)
+                           </div>
+                           <div class="form-check">
+                               @Html.CheckBoxFor(m => m.RememberMe, new { @class = "form-check-input" })
+                               @Html.LabelFor(m => m.RememberMe, new { @class = "form-check-label" })
+                           </div>
+                           <div class="mt-5 text-center">
+                               <button class="btn btn-primary">Submit</button>
+                           </div>
+
+                       }
+                   </div>
+                </div>
+            
+        </div>
+    </div>
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/jqueryval")
+    @Scripts.Render("~/bundles/bootstrap")
+</body>
+</html>

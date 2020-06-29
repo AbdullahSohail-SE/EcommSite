@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Web.Models
 {
-    public class Product
+    public class Product : BaseModel
     {
         public int product_id { get; set; }
         [Required]

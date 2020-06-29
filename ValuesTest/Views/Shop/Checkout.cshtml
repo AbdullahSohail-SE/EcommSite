@@ -1,0 +1,246 @@
+﻿
+@model Web.Models.BaseModel
+@{
+    ViewBag.Title = "Checkout";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+
+<div class="content-header d-flex">
+  <h2 class="text-teal" style="margin-left:50%;transform:translateX(-50%)">Cart</h2>
+</div>
+
+<div class="content">
+    <div class="data-table-container">
+        <table id="data-table">
+            <thead>
+                <tr>
+                    <th>
+                        Name
+                    </th>
+                    <th>
+                        Price
+                    </th>
+                    <th>
+                        Category
+                    </th>
+                    <th>
+                        Description
+                    </th>
+                    <th>
+                        Quantity
+                    </th>
+                    <th>
+                        Amount
+                    </th>
+                    <th>
+                        Delete
+                    </th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="6" style="text-align:right">Total:</th>
+                    <th> </th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    <div class="d-flex justify-content-center align-items-center">
+        <button id="shopBtn" class="btn btn-primary">Order <i class="fas fa-shopping-cart"></i></button>
+    </div>
+</div>
+@section Scripts
+{
+    <script>
+        $(function () {
+           
+            var datatable=$("#data-table").DataTable(
+                {
+                    searching: false,
+                    ajax: {
+                        url: "@Model.ServerUrl" + "/Shop/GetCartProducts",
+                        dataSrc: ""
+                    },
+                    drawCallback: function(){
+                        updateTotal();
+                    },
+                    
+                    columnDefs: [
+                        {
+                            targets: -3,//-2
+                            searchable: false,
+                            orderable: false,
+                            data: null,
+                            defaultContent:
+                              `<select class="form-control productQty" name="Qty">` +
+                                    `
+                               @for (int i=1; i<=100;i++)
+                               {
+                                   <option value='@i'>@i</option>
+                               }
+                                    `+
+                                 `</select>`
+                        },
+                        {
+                            targets: -1,
+                            searchable: false,
+                            orderable: false,
+                            data: null
+                            
+                        }
+                    ],
+                    columns: [
+                        {
+                            data: "name",
+                            render: function (data, type, product) {
+                                return `<a data-productId=${product.product_id} class="Name" href="@Model.ServerUrl/Product/Detail/${product.product_id}">${data}</a>`
+                            }
+                        },
+                        {
+                            data: "price",
+                            render: function (data) {
+                                return `<span class="Price">${data}</span>`
+                            }
+                        },
+                        {
+                            data: "category",
+                            render: function (data) {
+                                return `<span class="Category">${data}</span>`
+                            }
+                        },
+                        {
+                            data: "description",
+                            render: function (data) {
+                                return `<span class="Description">${data}</span>`
+                            }
+                        },
+                        {},
+                        {
+                            data: null,
+                            render: function (data, type, product) {
+                                return `<span class="Amount"> Rs ${product.price}</span>`
+                            }
+                           
+                        },
+                        {
+                            data: null,
+                            render: function (data, type, product) {
+                                return `<button data-id=${product.product_id} class="deleteFromCart btn btn-danger">Remove</button>`
+                            }
+                        }
+                   
+
+                    ]
+                }
+            );
+
+            $(".data-table-container").on("change", ".productQty", function (e) {
+
+                var tr = $(e.target).closest("tr");
+                var amount = datatable.row(tr).data().price * $(datatable.row(tr).node()).find(".productQty").val(); 
+
+                tr.find(".Amount").text(`Rs ${amount}`);
+                updateTotal();
+                
+            });
+            $("#shopBtn").on("click", function (e) {
+
+                var itemsList = [];
+
+                $("#data-table").find("tbody tr").each(function (i, e) {
+   
+                    var quantity = $(e).find(".productQty").val();
+                    var product_id = $(e).find(".Name").attr("data-productId");
+                    
+                    var cartProduct = { quantity, product_id };
+
+
+                    itemsList.push(cartProduct);
+                });
+                
+                $.ajax({
+                    type: "POST",
+                    url: "@Model.ServerUrl" + "/Shop/Order",
+                    headers: { 'Access-Control-Allow-Origin': '*' },
+                    crossDomain: true,
+                    data: {
+                        "list": itemsList,
+                        "Total": datatable.column(6).footer().innerText.replace("Rs","")
+                    },
+                    success: function (success) {
+                        
+
+                        if (success != -1) {
+
+                            bootbox.alert({
+                                
+                                size: 'large',
+                                message:
+    `<div class='row align-items-center justify-content-center p-1' style="margin-left:.5rem">
+        <div class="col-12 my-4" style="text-align:center">
+            <h4 class="text-teal">Your Order Has Been Placed!</h4>
+        </div>
+        <div class="row align-items-center justify-content-center" style="width:600px">
+            <div class="my-1 text-teal col-5">
+                Order 
+            </div>
+            <div class=" my-1 col-5">
+                #${success}
+            </div>
+            <div class=" my-1 text-teal col-5">
+                Delivery Address 
+            </div>
+            <div class=" my-1 col-5">
+                D-Block Satellite Town Rawalpindi
+            </div>
+            <div class=" my-1 text-teal col-5">
+                Total 
+            </div>
+            <div class=" my-1 col-5">
+                ${datatable.column(6).footer().innerText}
+            </div>
+        </div>
+        
+    </div>`
+                            });
+                            $.removeCookie("CartProducts", { path: '/' })
+                            datatable.clear().draw();
+                            updateAddToCartCount();
+                            
+                        }
+                            
+                        else
+                            alert("Some error occured");
+                    }
+                    
+                })
+            });
+            $(".data-table-container").on("click",".deleteFromCart", function (e) {
+
+                var tr= $(e.target).closest("tr");
+                datatable.row(row)
+                var product_id = $(e.target).attr("data-id");
+
+                
+            });
+        });
+
+        function updateTotal() {
+            var table = $("#data-table");
+            var datatable = $("#data-table").DataTable();
+            var total = 0;
+            table.find(".Amount").each(function (i, e) {
+                var amount = parseInt(e.textContent.replace("Rs", '').trim());
+                total += amount;
+            });
+            
+            $(datatable.column(6).footer()).html(`Rs ${total}`);
+        }
+       
+
+    </script>    
+    
+}

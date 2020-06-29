@@ -1,4 +1,6 @@
-﻿<!DOCTYPE html>
+﻿@using System.Configuration
+
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
@@ -18,7 +20,7 @@
         <div class="sidebar-wrapper">
             @Html.Partial("_SideBar")
         </div>
-       
+
         <div class="content-wrapper">
             @RenderBody()
         </div>
@@ -31,7 +33,7 @@
         </aside>
         <!-- /.control-sidebar -->
         <!-- Main Footer -->
-        
+
     </div>
     @Scripts.Render("~/bundles/jquery")
     <script src="@Url.Content("~/Plugins/bootstrap/js/bootstrap.bundle.min.js")"></script>

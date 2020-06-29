@@ -5,11 +5,14 @@ using System.Web;
 using System.Web.Mvc;
 using Newtonsoft.Json;
 using Web.Models;
-using DAL.Models;
+using Web.Models.ViewModels;
+using DALA;
+
 
 namespace Web.Controllers
 {
-    public class ProductController : Controller
+    [OutputCache(Duration = 0, VaryByParam = "*")]
+    public class ProductController : BaseController
     {
         // GET: Product
         public ProductDTO ProductDTOMapper(Product product)
@@ -27,12 +30,13 @@ namespace Web.Controllers
         [Route("Product/Add")]
         public ActionResult AddProduct()
         {
-           
-            return View();
+            if (!checkUserAuthenticated())
+                return RedirectToAction("Login", "User");
 
+            return View();
         }
 
-        public ActionResult AddToCart(Product product)
+        public ActionResult AddNewProduct(Product product)
         {
             var ProductDTO = ProductDTOMapper(product);
             if(!ModelState.IsValid)
@@ -41,14 +45,17 @@ namespace Web.Controllers
                 return View();
             }
             var manager = new DBManager("ValuesTest");
-            var product_id=manager.AddToCart(ProductDTO);
+            var product_id=manager.AddNewProduct(ProductDTO);
 
             return RedirectToAction("AddProduct");
         }
         
         public ActionResult DisplayProducts()
         {
-            return View();
+            if (!checkUserAuthenticated())
+                return RedirectToAction("Login", "User");
+
+            return View(new BaseModel());
         }
         public ActionResult GetProducts()
         {
@@ -68,7 +75,10 @@ namespace Web.Controllers
         [Route("Product/Search")]
         public ActionResult SearchProduct()
         {
-            return View();
+            if (!checkUserAuthenticated())
+                return RedirectToAction("Login", "User");
+
+            return View(new BaseModel());
         }
 
         public ActionResult SearchByKeyword(string keywords)
@@ -79,5 +89,26 @@ namespace Web.Controllers
             var json = JsonConvert.SerializeObject(productsList);
             return Content(json);
         }
+
+        [Route("Product/Detail/{productId}")]
+        public ActionResult ProductDetail(int productId)
+        {
+            if (!checkUserAuthenticated())
+                return RedirectToAction("Login", "User");
+
+            var manager = new DBManager("ValuesTest");
+            var product=manager.GetProduct(productId);
+
+            var productViewModel = new ProductDetailViewModel()
+            {
+                category = product.category,
+                description = product.description,
+                name = product.name,
+                price = product.price,
+                product_id = product.product_id
+            };
+            return View(productViewModel);
+        }
+        
     }
 }

@@ -1,110 +1,92 @@
-﻿
+﻿@model Web.Models.BaseModel
+
 @{
     ViewBag.Title = "SearchProduct";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
-    <div class="content-header d-flex">
-        <h2 class="text-teal" style="margin-left:50%;transform:translateX(-50%)">Search Products</h2>
-    </div>
-   
+<div class="content-header d-flex">
+    <h2 class="text-teal" style="margin-left:50%;transform:translateX(-50%)">Search Products</h2>
+</div>
 
-    <div class="content  ">
-        <div class="input-group justify-content-center " style="margin:0 auto">
 
-            <input id="keywords"  type="search" class="form-control" placeholder="Search" aria-label="Search" />
+<div class="content  ">
+    <div class="input-group justify-content-center " style="margin:0 auto">
 
-            <div  class="input-group-append">
-                <button id="search-btn" class="btn" type="submit">
-                    <i class="fas fa-search"></i>
-                </button>
-            </div>
-        </div>
-        <div id="empty-container" style="min-height:60vh" class="mt-4" >
-            <div id="empty"  style="min-height:60vh;border:2px dashed teal;" class="d-flex align-items-center justify-content-center mt-4">
-                <h4 class="font-weight-normal text-gray">No Products Searched</h4>
-            </div>
-            <div id="productContainer" class="row justify-content-center p-2">
-                
-            </div>
+        <input id="keywords" type="search" class="form-control" placeholder="Search" aria-label="Search" />
+
+        <div class="input-group-append">
+            <button id="search-btn" class="btn" type="submit">
+                <i class="fas fa-search"></i>
+            </button>
         </div>
     </div>
+    <div id="empty-container" style="min-height:60vh" class="mt-4">
+        
+        <div id="productContainer" >
+            <table id="data-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Price</th>
+                        <th>Category</th>
+                        <th>Description</th>
+                        
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
 @section scripts
 {
     <script>
-        function renderCards({ category,description,name,price}) {
-        return `<div class="card mx-1 p-2 col-3">
-                    <div class="card-header">
-                        <h3 class="card-title">${name}</h3>
-                        <div class="card-tools">
-                            <!-- Buttons, labels, and many other things can be placed here! -->
-                            <!-- Here is a label for example -->
-                            <button type="button" class="btn btn-tool" data-card-widget="remove"><i class="fas fa-times"></i></button>
-                            
-                        </div>
-                        <!-- /.card-tools -->
-                    </div>
-                    <div class="card-body">
-                        <div class="card-text">
-                            <p>${description}</p>
-                        </div>
-                        <div class="row justify-content-between">
-                            <div class="bg-info px-2">
-                                <span>${price}</span>
-                            </div>
-                            <div class="bg-info px-2">
-                                <span>${category}</span>
-                            </div>
-                            
-                        </div>
+       
+        function renderTable(data) {
+            $("#data-table").DataTable({
+                searching: false, data: data, columns: [
 
-                    </div>
-                    
-                </div>`
+                    {
+                        data: "name",
+                        render: function (data, type, product) {
+                            return `<a href="@Model.ServerUrl/Product/Detail/${product.product_id}">${data}</a>`
+                        }
+                    },
+                    {
+                        data: "price"
+                    },
+                    {
+                        data: "category"
+                    },
+                    {
+                        data: "description"
+                    }
+                ]})
         }
-        function clearProductContainer() {
-            $("#productContainer").empty();
-        }
-        
+
         $(function () {
+            var table = $("#data-table").DataTable({ data: [], searching: false });
             $("#search-btn").on("click", function () {
-                clearProductContainer();
+                
                 var keywords = $("#keywords");
-                console.log(keywords);
+                
                 $.ajax({
                     type: "get",
-                    dataType:"json",
-                    headers: {  'Access-Control-Allow-Origin': '*' },
+                    dataType: "json",
+                    headers: { 'Access-Control-Allow-Origin': '*' },
                     crossDomain: true,
-                    url: "http://localhost:50125/Product/SearchByKeyword",
+                    url: "@Model.ServerUrl" + "/Product/SearchByKeyword",
                     data: {
-                        keywords:$("#keywords").val()
+                        keywords: $("#keywords").val()
                     },
                     success: function (data) {
-                        $("#keywords").val("");
-                        if (Object.keys(data).length == 0) {
-                            $("#empty").remove();
-                            $("#empty-container").append(`<div id="empty"  style="min-height:60vh;border:2px dashed teal;" class="d-flex align-items-center justify-content-center mt-4">
-                              <h4 class="font-weight-normal text-gray">Nothing Found :(</h4>
-                            </div>`);
-                            $("#productContainer").css("display", "none");
-
-                        }
-                        else {
-                        $("#productContainer").css("display", "block");
-                        $("#empty").remove();
-                      
-                        for (var index in data) {
-                            
-                            var result = renderCards(data[index]);
-                            $("#productContainer").append(result);
-                            }
-                         }
-                        
+                        $("#data-table").DataTable().clear().destroy();
+                        renderTable(data);      
                     }
-                })
+                });
+
             });
-            
         });
-        
-    </script>    
+
+    </script>
 }

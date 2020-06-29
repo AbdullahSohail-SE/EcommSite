@@ -1,43 +1,98 @@
-﻿
+﻿@model Web.Models.BaseModel
+
 @{
     ViewBag.Title = "DisplayProducts";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-    <div class="content-header d-flex">
-        <h2 class="text-teal" style="margin-left:50%;transform:translateX(-50%)">Products</h2>
-    </div>
-    <div class="content">
-        <div id="data-table-div">
-            <table id="data-table">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Price</th>
-                        <th>Category</th>
-                        <th>Description</th>
-                        <th>Delete</th>
-                    </tr>
-                </thead>
-                <tbody>
+<div class="content-header d-flex">
+    <h2 class="text-teal" style="margin-left:50%;transform:translateX(-50%)">Products</h2>
+</div>
+<div class="content">
+    <div id="data-table-div">
+        <table id="data-table">
+            <thead>
+                <tr>
+                    <th class="text-center">Name</th>
+                    <th class="text-center">Price</th>
+                    <th class="text-center">Category</th>
+                    <th class="text-center">Description</th>
+                    <th class="text-center">Delete</th>
+                    <th class="text-center">Add To Cart</th>
                     
-                </tbody>
-            </table>
-        </div>
+                </tr>
+            </thead>
+            <tbody class="text-center"></tbody>
+        </table>
     </div>
+</div>
+
+
+
+
 @section scripts
     {
     <script>
+
+        function updateAddToCartCount() {
+            var cookie = $.cookie("CartProducts");
+
+            if (cookie === undefined)
+                $("#cartCount").text("0");
+            else
+            $("#cartCount").text(`${$.cookie("CartProducts").split("-").length}`);
+        }
+
         $(function () {
-            var table=$("#data-table").DataTable({
+
+            //cartCount
+            //updateAddToCartCount();
+
+            //displayed Products Ids
+            var displayedProducts = [];
+            // products in cookie
+            var productsIDs = [];
+            var cookie = $.cookie("CartProducts");
+            var expdate = new Date();
+            expdate.setDate(expdate.getDate() + 20);
+            
+            $.cookie("CartProducts", cookie, { path: '/', expires: expdate });
+
+            if (cookie !== undefined) {
+                
+                productsIDs = cookie.split("-").map(val => parseInt(val));
+                }
+
+            var table = $("#data-table").DataTable({
                 ajax: {
-                    url: "GetProducts",
-                    dataSrc:""
+                    url: "@Model.ServerUrl" + "/Product/GetProducts",
+                    dataSrc: ""
+                },
+                drawCallback: function (settings) {
+                    //get displayed products ids.
+                    var temp = [];
+                    var items = $(".addToCart");
+                    $.each(items, function (i, val) {
+                        temp.push(val.getAttribute("data-id"));
+                    });
+                    displayedProducts = temp;
+
+                    //give the items in cookie text-green
+
+                    productsIDs.forEach((value) => {
+                        $(`.addToCart[data-id="${value}"]`).addClass("text-teal");
+                    });
+                    
+                    
+                    
                 },
                 columns: [
-                 
+
                     {
-                        data:"name"
+                        data: "name",
+                        render: function (data, type, product) {
+                            return `<a href="@Model.ServerUrl/Product/Detail/${product.product_id}">${data}</a>`
+                        }
                     },
                     {
                         data: "price"
@@ -53,27 +108,77 @@
                         render: function (data, type, product) {
                             return `<button id="deleteProduct" data-id=${data} class='btn btn-danger'>Delete</button>`
                         }
+                    },
+                    {
+                        data: "product_id",
+                        render: function (data, type, product) {
+                            return `<i  data-id=${data} class="addToCart fa fa-shopping-cart " aria-hidden="true"></i>`
+                        }
                     }
                 ]
             });
             $("#data-table-div").on("click", (e) => {
                
-                var id = e.target.getAttribute("data-id");
-                $.ajax({
-                    type:"delete",
-                    headers: {  'Access-Control-Allow-Origin': '*' },
-                    crossDomain: true,
-                    url: "http://localhost:50125/Product/DeleteProduct/" + id,
-                    success: function () {
-                        
-                        table.row($(e.target).parents("tr")).remove().draw();
-                    }
-                });
+                if (e.target.id == "deleteProduct")
+                    bootbox.confirm("Are you sure you want to delete", function (result) {
+                        if (result) {
+
+                            var id = e.target.getAttribute("data-id");
+                            $.ajax({
+                                type: "delete",
+                                headers: { 'Access-Control-Allow-Origin': '*' },
+                                crossDomain: true,
+                                url: '@Model.ServerUrl' + "/Product/DeleteProduct/" + id,
+                                success: function () {
+
+                                    table.row($(e.target).parents("tr")).remove().draw();
+                                }
+                            });
+
+                        }
+                    });
+
 
             });
+
+            //AddToCart Functionality
+
+           
+           
             
-        })
+            
+
+            $("#data-table-div").on("click", ".addToCart", (e) => {
+               //check if exists in cart
+               //if doesnt exist then push to cookie and give teal class
+               //if exists then remove from cookie and remove teal class
+                var item = e.target;
+                if ((productsIDs.findIndex(id => item.getAttribute("data-id") == id)) == -1) {
+                    productsIDs.push(e.target.getAttribute("data-id"));
+                    $.cookie("CartProducts", productsIDs.join("-"), { path: '/' });
+                    $(item).addClass("text-teal");
+                    updateAddToCartCount();
+                }
+                else {
+                    var itemIndex = productsIDs.findIndex((value) => {
+                        return item.getAttribute("data-id") == value;
+                    });
+                    productsIDs.splice(itemIndex, 1);
+                    $(item).removeClass("text-teal");
+                    if (productsIDs.length == 0) {
+                        $.removeCookie('CartProducts', { path: '/' });
+                    }
+                    else
+                        $.cookie("CartProducts", productsIDs.join("-"), { path: '/' });
+                    updateAddToCartCount();
+                }
+               
+            })
+
+
+
+        });
     </script>
-    
-    }
+
+}
 

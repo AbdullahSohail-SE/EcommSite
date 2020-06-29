@@ -10,7 +10,10 @@ namespace Web
         {
             bundles.Add(new ScriptBundle("~/bundles/jquery").Include(
                         "~/Scripts/jquery-{version}.js",
-                      "~/Scripts/DataTables/jquery.dataTables.min.js"));
+                        "~/Scripts/bootbox.js",
+                      "~/Scripts/DataTables/jquery.dataTables.min.js",
+                      "~/Scripts/jquery.cookie.js",
+                      "~/Scripts/global.js"));
 
             bundles.Add(new ScriptBundle("~/bundles/jqueryval").Include(
                         "~/Scripts/jquery.validate*"));
@@ -19,9 +22,13 @@ namespace Web
             // ready for production, use the build tool at https://modernizr.com to pick only the tests you need.
             bundles.Add(new ScriptBundle("~/bundles/modernizr").Include(
                         "~/Scripts/modernizr-*"));
+            bundles.Add(new StyleBundle("~/Content/bootstrap").Include(
+                "~/Content/bootstrap.css"
+                ));
 
             bundles.Add(new ScriptBundle("~/bundles/bootstrap").Include(
-                      "~/Scripts/bootstrap.js"));
+                      "~/Scripts/bootstrap.js"                      
+                      ));
 
             bundles.Add(new StyleBundle("~/Content/css").Include(
                       

@@ -7,5 +7,16 @@ textarea {
 }
 .field-validation-error{
     font-size:12px;
+
     color:red;
+}
+td.details-control {
+    background: url(../Content/Images/plus-circle-solid.svg) no-repeat center center;
+    background-size:20px;
+    cursor: pointer;
+}
+
+tr.shown td.details-control {
+    background: url(../Content/Images/minus-circle-solid.svg) no-repeat center center;
+    background-size: 20px;
 }

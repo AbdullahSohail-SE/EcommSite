@@ -1,0 +1,126 @@
+﻿@model Web.Models.BaseModel
+@{
+    ViewBag.Title = "Orders";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="content-header d-flex">
+        <h2 class="text-teal" style="margin-left:50%;transform:translateX(-50%)">My Orders</h2>
+</div>
+<div class="content">
+    <div class="datatable-container">
+        <table id="datatable">
+            <thead>
+                <tr>
+                    <th>
+
+                    </th>
+                    <th>
+                        Order ID
+                    </th>
+                    <th>
+                        Amount
+                    </th>
+                    <th>
+                        Date
+                    </th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+    </div>
+</div>
+
+@section Scripts{
+    <script>
+
+        
+        $(function () {
+            
+
+
+           var datatable=$("#datatable").DataTable({
+            ajax: {
+                url: "@Model.ServerUrl" + "/Shop/GetOrdersList",
+                dataSrc:""
+            },
+            columns: [
+                {
+                    data: null,
+                    defaultContent: "",
+                    searchable: false,
+                    orderable: false,
+                    className:"details-control"
+                    
+                },
+                {
+                    data: "Order_Id",
+                    render: function (data, type, row) {
+                        return `<a href="" data-id="${data}">Ord#${data} </a>`
+                    }
+                },
+                {
+                    data:"Amount"
+                },
+                {
+                    data:"Date"
+                }
+                
+               ],
+            "order": [[1, 'asc']]
+           });
+            
+            $("#datatable").on('click', 'td.details-control', function (e) {
+                var tr = $(e.target).closest("tr");
+                var row = datatable.row(tr);
+
+                               
+                
+                
+                if ( row.child.isShown() ) {
+            // This row is already open - close it
+                    row.child.hide();
+                    tr.removeClass('shown');
+                   }
+                else {
+                    // Open this row
+                    var markup = "";
+                    var products = row.data().Products;
+                    console.log(row.data());
+                    for (var key in products) {
+                        markup +=
+                            `<div class="row my-1 ml-2 bg-success">
+                             <span class="col-3 ">${parseInt(key) + 1}.</span >
+                             <span class="col-3 ">${products[key].name}</span>
+                             <span class="col-3 ">${products[key].price}</span>
+                             <span class="col-3 ">${products[key].quantity}</span>
+                            </div>`
+                    }
+                    
+                    
+    
+                    row.child(
+    
+    `
+    <div>
+        <div class="row  ml-2">
+            <span class="col-3 h6 text-teal">No</span>
+            <span class="col-3 h6 text-teal">Name</span>
+            <span class="col-3 h6 text-teal">Unit Price</span>
+            <span class="col-3 h6 text-teal">Qty</span>
+        </div>
+        ${markup}
+        
+    </div>
+    `
+    
+                        ).show();
+                    tr.addClass('shown');
+                   }
+            });
+        })
+        
+    </script>
+    
+    }
