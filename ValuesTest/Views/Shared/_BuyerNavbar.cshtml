@@ -1,0 +1,21 @@
+﻿
+<nav class="main-header navbar navbar-expand-sm">
+        
+        <span class="navbar-brand text-orange ml-2">Producty</span>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item" style="position:relative">
+                    <span id="cartCount" class="badge badge-warning" style="position: absolute;right: -4px;top: -2px;">2</span>
+                    <a href="http://localhost/MyApp/Shop/Checkout"><span class="nav-link active"><i class="fas fa-shopping-cart text-orange"></i></span></a>
+                </li>
+                <li class="nav-item">
+                    <span class="nav-link active"><i class="fas fa-user text-orange mx-2"></i>@Html.Action("getSessionUserName", "Base")</span>
+                </li>
+                <li class="nav-item">
+
+                    @Html.ActionLink("Sign Out", "SignOut", "User", null, new { @class = "nav-link text-orange" })
+
+                </li>
+            </ul>
+        </div>
+</nav>

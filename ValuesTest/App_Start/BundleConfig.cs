@@ -14,6 +14,12 @@ namespace Web
                       "~/Scripts/DataTables/jquery.dataTables.min.js",
                       "~/Scripts/jquery.cookie.js",
                       "~/Scripts/global.js"));
+            bundles.Add(new ScriptBundle("~/bundles/minicart")
+                .Include
+                (
+                    "~/Scripts/ShoppingCart/minicart.min.js"
+                )
+                );
 
             bundles.Add(new ScriptBundle("~/bundles/jqueryval").Include(
                         "~/Scripts/jquery.validate*"));
@@ -33,6 +39,7 @@ namespace Web
             bundles.Add(new StyleBundle("~/Content/css").Include(
                       
                       "~/Content/site.css"));
+           
         }
     }
 }

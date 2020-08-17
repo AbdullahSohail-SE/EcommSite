@@ -5,6 +5,8 @@ using System.Web;
 using System.Web.Mvc;
 using Web.Models.ViewModels;
 using DALA;
+using Web.Models;
+using Newtonsoft.Json;
 
 namespace Web.Controllers
 {
@@ -13,6 +15,12 @@ namespace Web.Controllers
         // GET: User
         public ActionResult Login(LoginViewModel loginViewModel)
         {
+            
+            var userCookie = getValidCookieUser();
+            if (userCookie!=null)
+            {
+                return View(new LoginViewModel() { Email=userCookie.Email, Password=userCookie.Password });
+            }
             return View(loginViewModel);
         }
 
@@ -45,13 +53,59 @@ namespace Web.Controllers
             {
                 setCookie();
             }
-            return RedirectToAction("DisplayProducts", "Product");    
+            if(manager.CheckIfAdmin(loginViewModel.Email))
+            {
+                return RedirectToAction("DisplayProducts", "Product");
+            }
+            return RedirectToAction("Products", "Buyer");
         }
 
         public ActionResult SignOut()
         {
             terminateUserSession();
             return RedirectToAction("Login", "User");
+        }
+        public ActionResult ShowAddresses()
+        {
+            if (!checkUserAuthenticated())
+                return RedirectToAction("Login", "User");
+
+            return View(new BaseModel());
+        }
+        public ActionResult GetUserAddresses()
+        {
+            
+            var manager = new DBManager("ValuesTest");
+
+            var user = Session["User"] as User;
+            var userId = user.UserId;
+
+            var list=manager.GetUserAddresses(userId);
+
+            return Content(JsonConvert.SerializeObject(list));
+            
+        }
+        public ActionResult DeleteUserAddress(int id)
+        {
+            var manager = new DBManager("ValuesTest");
+
+            var user = Session["User"] as User;
+            var userId = user.UserId;
+
+            manager.DeleteUserAddress(userId, id);
+
+            return new EmptyResult();
+        }
+        public ActionResult AddUserAddress(string address)
+        {
+            var manager = new DBManager("ValuesTest");
+
+            var user = Session["User"] as User;
+            var userId = user.UserId;
+
+            var newId=manager.AddUserAddress(userId, address);
+
+            return Content(newId.ToString());
         }
     }
 }

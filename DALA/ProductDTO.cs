@@ -17,5 +17,7 @@ namespace DALA
         public string category { get; set; }
 
         public string description { get; set; }
+        public string imageName { get; set; }
+
     }
 }

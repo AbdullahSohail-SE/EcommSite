@@ -52,6 +52,11 @@
         <button id="shopBtn" class="btn btn-primary">Order <i class="fas fa-shopping-cart"></i></button>
     </div>
 </div>
+<div class="dark-overlay row align-items-center justify-content-center ">
+    <div class="lds-dual-ring">
+
+    </div>
+</div>
 @section Scripts
 {
     <script>
@@ -66,6 +71,11 @@
                     },
                     drawCallback: function(){
                         updateTotal();
+                        if ($("#data-table").DataTable().data().any())
+                            $("#shopBtn").attr("disabled", false);
+                        else if (!$("#data-table").DataTable().data().any())
+                            $("#shopBtn").attr("disabled", true);
+                        updateAddToCartCount();
                     },
                     
                     columnDefs: [
@@ -136,7 +146,24 @@
                     ]
                 }
             );
+            $(".data-table-container").on("click", ".deleteFromCart", function (e) {
+                var data = $(e.target).attr("data-id");
+                var cartCookie = $.cookie("CartProducts");
+                var arr = cartCookie.split("-");
+                arr.splice(arr.indexOf(data), 1);
+                
+                if (arr.length == 0) {
+                    console.log("gets Triggered!");
+                    $.removeCookie('CartProducts', { path: '/' });
+                }
+                else
+                    $.cookie("CartProducts", arr.join("-"), { path: '/', expires: 10 });
+                var tr = $(e.target).closest("tr");
+                datatable.row(tr).remove().draw();
 
+                updateAddToCartCount();
+                
+            });
             $(".data-table-container").on("change", ".productQty", function (e) {
 
                 var tr = $(e.target).closest("tr");
@@ -163,7 +190,7 @@
                 
                 $.ajax({
                     type: "POST",
-                    url: "@Model.ServerUrl" + "/Shop/Order",
+                    url: "@Model.ServerUrl" + "/Shop/ProceedToPay",
                     headers: { 'Access-Control-Allow-Origin': '*' },
                     crossDomain: true,
                     data: {
@@ -171,61 +198,26 @@
                         "Total": datatable.column(6).footer().innerText.replace("Rs","")
                     },
                     success: function (success) {
-                        
 
-                        if (success != -1) {
 
-                            bootbox.alert({
-                                
-                                size: 'large',
-                                message:
-    `<div class='row align-items-center justify-content-center p-1' style="margin-left:.5rem">
-        <div class="col-12 my-4" style="text-align:center">
-            <h4 class="text-teal">Your Order Has Been Placed!</h4>
-        </div>
-        <div class="row align-items-center justify-content-center" style="width:600px">
-            <div class="my-1 text-teal col-5">
-                Order 
-            </div>
-            <div class=" my-1 col-5">
-                #${success}
-            </div>
-            <div class=" my-1 text-teal col-5">
-                Delivery Address 
-            </div>
-            <div class=" my-1 col-5">
-                D-Block Satellite Town Rawalpindi
-            </div>
-            <div class=" my-1 text-teal col-5">
-                Total 
-            </div>
-            <div class=" my-1 col-5">
-                ${datatable.column(6).footer().innerText}
-            </div>
-        </div>
-        
-    </div>`
-                            });
-                            $.removeCookie("CartProducts", { path: '/' })
-                            datatable.clear().draw();
-                            updateAddToCartCount();
+                        $(".content").html(success);
+
+                        //if (success != -1) {
+
                             
-                        }
+                        //    $.removeCookie("CartProducts", { path: '/' });
+                        //    datatable.clear().draw();
+                        //    updateAddToCartCount();
                             
-                        else
-                            alert("Some error occured");
+                        //}
+                            
+                        //else
+                        //    alert("Some error occured");
                     }
                     
                 })
             });
-            $(".data-table-container").on("click",".deleteFromCart", function (e) {
-
-                var tr= $(e.target).closest("tr");
-                datatable.row(row)
-                var product_id = $(e.target).attr("data-id");
-
-                
-            });
+            
         });
 
         function updateTotal() {
@@ -239,7 +231,26 @@
             
             $(datatable.column(6).footer()).html(`Rs ${total}`);
         }
-       
+
+        function caller(data) {
+            if (data) {
+                $.removeCookie("CartProducts", { path: '/' });
+                updateAddToCartCount();
+                location.reload();
+            }
+            else {
+                bootbox.alert("Some Error Occured :(");
+            }
+        }
+        function DisplayOverlay() {
+            $.LoadingOverlay("show");
+            
+            console.log("Display Started");
+        }
+        function RemoveOverlay() {
+            $.LoadingOverlay("hide")
+            console.log("Display Removed");
+        }
 
     </script>    
     

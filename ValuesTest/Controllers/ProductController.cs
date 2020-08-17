@@ -7,6 +7,8 @@ using Newtonsoft.Json;
 using Web.Models;
 using Web.Models.ViewModels;
 using DALA;
+using System.IO;
+using System.Configuration;
 
 
 namespace Web.Controllers
@@ -36,29 +38,61 @@ namespace Web.Controllers
             return View();
         }
 
-        public ActionResult AddNewProduct(Product product)
+        public ActionResult AddNewProduct(AddNewProductVM addNewProductVM)
         {
+            var product = new Product()
+            {
+                category = addNewProductVM.category,
+                description = addNewProductVM.description,
+                name = addNewProductVM.name,
+                price = addNewProductVM.price,
+                product_id = addNewProductVM.product_id
+            };
             var ProductDTO = ProductDTOMapper(product);
             if(!ModelState.IsValid)
             {
-
                 return View();
             }
+
+
+           
+
+            ProductDTO.imageName = addNewProductVM.productImg.FileName;
             var manager = new DBManager("ValuesTest");
-            var product_id=manager.AddNewProduct(ProductDTO);
+            object result=manager.AddNewProduct(ProductDTO);
+            int imageId = (int)result.GetType().GetProperty("imageId").GetValue(result);
+            int productId= (int)result.GetType().GetProperty("productId").GetValue(result);
+
+
+            if ((int)imageId != -1 )
+            {
+                var directory = Server.MapPath("~/"+ConfigurationManager.AppSettings["UserImagePath"].ToString()) +
+                    productId;
+                if (!Directory.Exists(directory))
+                    Directory.CreateDirectory(directory);
+                addNewProductVM.productImg.SaveAs(
+                    directory + '/' +
+                    ProductDTO.imageName
+                    );
+            }
+            
+
 
             return RedirectToAction("AddProduct");
         }
         
         public ActionResult DisplayProducts()
         {
+           
             if (!checkUserAuthenticated())
                 return RedirectToAction("Login", "User");
 
             return View(new BaseModel());
         }
+        [HttpGet]
         public ActionResult GetProducts()
         {
+            
             var manager = new DBManager("ValuesTest");
             var productsList = manager.GetProducts();
 
@@ -69,7 +103,10 @@ namespace Web.Controllers
         public void DeleteProduct(int id)
         {
             var manager = new DBManager("ValuesTest");
-            manager.DeleteProduct(id);
+            var dir=manager.DeleteProduct(id);
+            dir = Server.MapPath("~/" + dir.Substring(0, dir.LastIndexOf('/')));
+            if (Directory.Exists(dir))
+                Directory.Delete(dir,true);
 
         }
         [Route("Product/Search")]

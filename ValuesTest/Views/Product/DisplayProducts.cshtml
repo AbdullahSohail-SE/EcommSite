@@ -61,6 +61,7 @@
             if (cookie !== undefined) {
                 
                 productsIDs = cookie.split("-").map(val => parseInt(val));
+
                 }
 
             var table = $("#data-table").DataTable({
@@ -69,6 +70,8 @@
                     dataSrc: ""
                 },
                 drawCallback: function (settings) {
+                    
+                    
                     //get displayed products ids.
                     var temp = [];
                     var items = $(".addToCart");
@@ -155,7 +158,9 @@
                 var item = e.target;
                 if ((productsIDs.findIndex(id => item.getAttribute("data-id") == id)) == -1) {
                     productsIDs.push(e.target.getAttribute("data-id"));
-                    $.cookie("CartProducts", productsIDs.join("-"), { path: '/' });
+                    $.cookie("CartProducts", productsIDs.join("-"), { path: '/', expires: 10 });
+                    
+                    
                     $(item).addClass("text-teal");
                     updateAddToCartCount();
                 }
@@ -164,6 +169,7 @@
                         return item.getAttribute("data-id") == value;
                     });
                     productsIDs.splice(itemIndex, 1);
+                    
                     $(item).removeClass("text-teal");
                     if (productsIDs.length == 0) {
                         $.removeCookie('CartProducts', { path: '/' });

@@ -1,0 +1,67 @@
+﻿@model Web.Models.ViewModels.ProceedToPayVM
+<div class="row align-items-center justify-content-center mt-4">
+    <div class="card col-8">
+        <div class="card-header">
+            <h5 class="text-teal text-center">Invoice</h5>
+        </div>
+        <div class="card-body">
+
+
+            <div class="row">
+                <span class="col-6 text-teal">Item</span>
+                <span class="col-2 text-teal">Unit Price</span>
+                <span class="col-2 text-teal">Quantity</span>
+                <span class="col-2 text-teal">Amount</span>
+            </div>
+            <hr />
+            @foreach (var product in Model.productsList)
+            {
+                <div class="row">
+                    <span class="col-6">@product.name</span>
+                    <span class="col-2">@product.price</span>
+                    <span class="col-2">@product.quantity</span>
+                    <span class="col-2">@((product.quantity * product.price).ToString())</span>
+
+                </div>
+            }
+            <hr />
+            <div class="row">
+                <span class="col-2 offset-8 text-info"> Total:</span><span class="col-1">@Model.Total</span>
+            </div>
+            <hr />
+            @using (Ajax.BeginForm("Order", "Shop", new AjaxOptions { OnSuccess = "caller(data)",OnBegin="DisplayOverlay",OnComplete="RemoveOverlay"}))
+            {
+                <div class="row">
+                    <div class="col-6">
+                        <h6 class="col-12 text-teal">Billing Address:</h6>
+                        @Html.DropDownListFor(m => m.Id, new SelectList(Model.addressList, "Id", "Address"), "Select Shipping Address", new { @class = "form-control" })
+                        @Html.ValidationMessageFor(m => m.Id)
+                    </div>
+                    <div class="col-6">
+                        <h6 class="col-12 text-teal text-right">Payment Method</h6>
+                        <span class="d-block p-1 text-info text-right">Cash on delivery</span>
+                    </div>
+                </div>
+                for (int i = 0; i < Model.productsList.Count; i++)
+                {
+                    <input hidden name="productsList[@i].category" value="@Model.productsList[i].category" />
+                    <input hidden name="productsList[@i].description" value="@Model.productsList[i].description" />
+                    <input hidden name="productsList[@i].price" value="@Model.productsList[i].price" />
+                    <input hidden name="productsList[@i].product_id" value="@Model.productsList[i].product_id" />
+                    <input hidden name="productsList[@i].quantity" value="@Model.productsList[i].quantity" />
+                    <input hidden name="productsList[@i].name" value="@Model.productsList[i].name" />
+                }
+                @Html.HiddenFor(m => m.Total)
+                <div class="py-3 pb-4  d-flex">
+                    <button type="submit" class="btn btn-primary mx-auto">Purchase</button>
+                </div>
+            }
+        
+        </div>
+        </div>
+
+</div>
+
+
+   
+

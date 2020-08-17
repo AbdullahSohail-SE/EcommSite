@@ -6,6 +6,10 @@ using System.Web.Mvc;
 using System.Configuration;
 using Web.Models;
 using Newtonsoft.Json;
+using Newtonsoft;
+using Newtonsoft.Json.Converters;
+using System.Web.Security;
+using Newtonsoft.Json.Linq;
 
 namespace Web.Controllers
 {
@@ -24,10 +28,7 @@ namespace Web.Controllers
         }
         public bool checkUserAuthenticated()
         {
-            var user=getValidCookieUser();
-
-            if (user != null)
-                Session["User"] = user;
+           
 
             if (Session["User"] as User != null )
                 return true;
@@ -36,14 +37,23 @@ namespace Web.Controllers
         }
         public ActionResult terminateUserSession()
         {
-            HttpContext.Response.Cookies["UserInfo"].Expires = DateTime.Now.AddDays(-1);
+            //HttpContext.Response.Cookies["UserInfo"].Expires = DateTime.Now.AddDays(-1);
             Session.Abandon();
             return new EmptyResult();
             
         }
         public ActionResult setCookie()
         {
-            var value = JsonConvert.SerializeObject(Session["User"] as User);
+            var user = Session["User"] as User;
+
+            var cookieUser = new User() { Email = user.Email, Name = user.Name, Password = user.Password, UserId = user.UserId };
+
+
+            cookieUser.Email = EncryptionManager.Protect(user.Email);
+            cookieUser.Password = EncryptionManager.Protect(user.Password);
+
+            var value = JsonConvert.SerializeObject(cookieUser);
+
             var cookie = new HttpCookie("UserInfo", value);
             cookie.Expires = DateTime.Now.AddHours(.5);
             HttpContext.Response.Cookies.Add(cookie);
@@ -56,6 +66,11 @@ namespace Web.Controllers
             if ( cookie != null)
             {
                 dynamic user = JsonConvert.DeserializeObject(cookie.Value);
+                var emailStr = (user.Email as JValue).ToString();
+                var passwordStr = (user.Password as JValue).ToString();
+                
+                user.Email = EncryptionManager.Unprotect(emailStr);
+                user.Password = EncryptionManager.Unprotect(passwordStr);
                 var userObj = new User() { Email = user.Email, Password = user.Password, Name = user.Name, UserId = user.UserId };
                 return userObj;
             }

@@ -1,0 +1,33 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>_BuyerLayout</title>
+    <link href="@Url.Content("~/Plugins/fontawesome-free/css/all.min.css")" rel="stylesheet" />
+    <link href="@Url.Content("~/Content/AdminLTE/adminlte.min.css")" rel="stylesheet" />
+    <link href="@Url.Content("~/Content/minicart/style.css")" rel="stylesheet" />
+    <link href="@Url.Content("~/Content/toast/jquery.toast.min.css")" rel="stylesheet" />
+    
+    @Styles.Render("~/Content/css")
+</head>
+<body class="layout-top-nav">
+    <div class="wrapper">
+        @Html.Partial("_BuyerNavbar")
+        @RenderBody()
+    </div>
+    @Scripts.Render("~/bundles/minicart")
+    @Scripts.Render("~/bundles/jquery")
+    <script src="@Url.Content("~/Plugins/bootstrap/js/bootstrap.bundle.min.js")"></script>
+    <script src="@Url.Content("~/Scripts/jquery.unobtrusive-ajax.js")" type="text/javascript"></script>
+    <script src="@Url.Content("~/Scripts/toast/jquery.toast.min.js")" type="text/javascript"></script>
+    @RenderSection("scripts", required: false)
+</body>
+
+
+</html>

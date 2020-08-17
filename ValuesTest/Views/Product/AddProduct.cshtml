@@ -7,34 +7,48 @@
 <div class="content-header d-flex">
     <h2 class="text-teal" style="margin-left:50%;transform:translateX(-50%)">AddProduct</h2>
 </div>
-<div class="content" style="width:20rem;margin-left:50%;transform:translateX(-50%)">
+<div class="content" >
 
     <!-- Modal -->
 
 
-    @using (Html.BeginForm("AddNewProduct", "Product"))
+    @using (Html.BeginForm("AddNewProduct", "Product",FormMethod.Post,new { enctype = "multipart/form-data" }))
     {
-        <div style="margin-bottom:.5rem">
-            @Html.LabelFor(m => m.name, new { @class = "text-teal" })
-            @Html.TextBoxFor(m => m.name, new { @class = "form-control" })
-            @Html.ValidationMessageFor(m => m.name)
+        <div class="row mb-2 justify-content-center mx-auto" style="width:40rem">
+            <div class="col-6 row justify-content-center">
+                <div class="col-12" style="margin-bottom:.5rem">
+                    @Html.LabelFor(m => m.name, new { @class = "text-teal" })
+                    @Html.TextBoxFor(m => m.name, new { @class = "form-control" })
+                    @Html.ValidationMessageFor(m => m.name)
+                </div>
+                <div class="col-12" style="margin-bottom:.5rem">
+                    @Html.LabelFor(m => m.category, new { @class = "text-teal" })
+                    @Html.TextBoxFor(m => m.category, new { @class = "form-control" })
+                    @Html.ValidationMessageFor(m => m.category)
+                </div>
+                <div class="col-12" style="margin-bottom:.5rem">
+                    @Html.LabelFor(m => m.description, new { @class = "text-teal" })
+                    @Html.TextBoxFor(m => m.description, new { @class = "form-control" })
+                    @Html.ValidationMessageFor(m => m.description)
+                </div>
+                <div class="col-12" style="margin-bottom:.5rem">
+                    @Html.LabelFor(m => m.price, new { @class = "text-teal" })
+                    @Html.TextBoxFor(m => m.price, new { @class = "form-control" })
+                    @Html.ValidationMessageFor(m => m.price)
+                </div>
+            </div>
+            <div class="col-6 row align-items-center justify-content-center">
+                <div class="preview" style="width:12rem;height:12rem;display:none">
+                    
+                </div>
+                <div class="slot row justify-content-center align-items-center " style="width:12rem;height:12rem;border:2px dashed black">
+                    <label for="productPhoto" style="cursor:pointer"><i class="fas fa-camera text-gray-dark remove-address-icon"></i></label>
+                    <input name="productImg" id="productPhoto" accept="image/*" type="file" hidden />
+                </div>
+            </div>
         </div>
-        <div style="margin-bottom:.5rem">
-            @Html.LabelFor(m => m.category, new { @class = "text-teal" })
-            @Html.TextBoxFor(m => m.category, new { @class = "form-control" })
-            @Html.ValidationMessageFor(m => m.category)
-        </div>
-        <div style="margin-bottom:.5rem">
-            @Html.LabelFor(m => m.description, new { @class = "text-teal" })
-            @Html.TextBoxFor(m => m.description, new { @class = "form-control" })
-            @Html.ValidationMessageFor(m => m.description)
-        </div>
-        <div style="margin-bottom:.5rem">
-            @Html.LabelFor(m => m.price, new { @class = "text-teal" })
-            @Html.TextBoxFor(m => m.price, new { @class = "form-control" })
-            @Html.ValidationMessageFor(m => m.price)
-        </div>
-        <div>
+        
+        <div class="text-center">
             <button class="btn btn-outline-success">Submit</button>
         </div>
     }
@@ -43,4 +57,40 @@
     {
     
     @Scripts.Render("~/bundles/jqueryval")
+    <script>
+        $(".preview").on("click", ".clearImg", function (e) {
+            $(".preview img").remove();
+            $(".preview .clearImg").remove();
+            $(".preview").css("display", "none");
+            $(".slot").css("display", "flex");
+            
+        });
+        var productImage = $("#productPhoto");
+        productImage.on("change", function (e) {
+            
+            const reader = new FileReader();
+            const fileList = e.currentTarget.files;
+
+            reader.readAsDataURL(fileList[0]);
+            $(".slot").css("display", "none");
+            $(".preview").css("display", "block");
+            $(".preview").LoadingOverlay = "show";
+            reader.onload = function () {
+                var image = new Image();
+               
+                
+                image.src = reader.result;
+                image.style.objectFit = "cover";
+                image.style.width = "100%";
+                image.style.height = "100%";
+                $(".preview").LoadingOverlay = "hide";
+                $(".preview").append(image);
+
+                $(".preview").append("<i  class='clearImg fa fa-trash text-danger ' style='margin-left: 50%;transform: translateX(-50%);margin-top:1rem;'></i>");
+               
+            }
+            
+            
+        });
+    </script>
 }

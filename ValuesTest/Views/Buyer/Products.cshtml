@@ -1,0 +1,360 @@
+﻿@model Web.Models.ViewModels.BuyerProductsVM
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_BuyerLayout.cshtml";
+}
+
+<div class="content-header">
+    <div class="text-center">
+        <div class="text-center d-inline-block back-orange py-2 px-5">
+            <h1 class="user-headline">We Have It All!</h1>
+        </div>
+    </div>
+</div>
+
+<div class="content">
+    
+    <div class="search-box-div w-100 row align-items-center justify-content-center">
+       
+       
+        <div class="position-relative row">
+            <input id="keywords" type="search" autocomplete="off" placeholder="Search in Producty" name="keywords" class="search-box form-control" />
+            <button id="btn-search-product" class="btn btn-search" >
+                <i class="fa fa-search"></i>
+            </button>
+        </div>
+        
+    </div>
+    <hr />
+    <div class="row w-100">
+        <div class="col-2 p-1 px-3">
+            <div class="category-div mb-2">
+                <div class="mb-4">
+                    <span>Categories</span>
+                </div>
+                @foreach (var category in Model.Categories)
+                {
+                    <div class="form-check mb-2">
+                        <input class="category-check form-check-input" name="@category" type="checkbox">
+                        <label class="form-check-label text-gray" for="defaultCheck1">
+                            @category
+                        </label>
+                    </div>
+                }
+
+            </div>
+            <hr />
+            <div class="price-range-div ">
+                <div class="my-2">
+                    <span>Price</span>
+                </div>
+                <div class="form-group align-items-center justify-content-center row">
+                    <input id="min-price" placeholder="Min" type="text" class="form-control-sm form-control col-5" style="border:1px solid orange" name="price-from" />
+                    <span class="col-1 text-center" style="margin-left: -2px;margin-right: 1px;">-</span>
+                    <input id="max-price" placeholder="Max" type="text" class="form-control-sm form-control col-5" style="border:1px solid orange" name="price-till" value="" />
+                </div>
+                <div>
+                    <button id="price-btn" class="btn btn-xs bg-orange w-100"><i class="fas text-white fa-arrow-right"></i></button>
+                </div>
+            </div>
+        </div>
+        <div class="col-10">
+            <div class="top-filters row justify-content-between align-items-center">
+                <span class="col-4 text-gray totalResults">Showing All Products</span>
+                <div  class="filters ml-auto col-3 row align-items-center justify-content-between mr-3">
+                    <span class="col-4 text-gray">Sort By :</span>
+                    <select id="orderBy" name="orderBy" class="col-8 form-control form-control-sm">
+                        <option value="Alphabatically">Alphabets</option>
+                        <option value="Price">Price</option>
+                    </select>
+                </div>
+
+                <div class="mr-3">
+                    <button id="btn-sort" class="btn btn-flat">
+                        <i id="sort-down" class="fas fa-sort-amount-down text-orange"></i>
+                        <i id="sort-up" class="fas fa-sort-amount-up text-orange" style="display:none"></i>
+                    </button>
+                    
+                </div>
+                
+            </div>
+            <hr />
+            <div class="p-2 my-5 row align-items-stretch" id="cardContainer">
+
+                @foreach (var product in Model.ProductsList)
+                {
+                    <div class="cart-grid">
+                        <div class="img">
+
+                            <img style="object-fit:contain;height:220px" src="~/@product.imageName" alt="No image available :(">
+                        </div>
+
+                        <ul class="info">
+                            <li style="display:block;margin-top:.5rem">@product.name</li>
+                            <li style="display:block;margin-top:.5rem">$@product.price</li>
+                        </ul>
+                        <div class="snipcart-details ">
+                            <button class="addToCart button w3l-cart" data-id="@product.product_id">add to cart</button>
+                        </div>
+                    </div>
+
+                }
+
+
+
+            </div>
+            
+            @if (Model.TotalPages != 1) {
+            <div class="pagination-div row justify-content-end my-4 mr-2">
+                <nav aria-label="Page navigation example">
+                    <ul class="pagination">
+                        <li class="page-item "><a class="page-link ifxt-orange" id="Prev">Previous</a></li>
+                        @for (int i = 1; i <= Model.TotalPages; i++)
+                        {
+                            <li id='@i' class="page-item"><a class="page-link  text-orange" href="#">@i</a></li>
+                        }
+                        <li class="page-item"><a class="page-link text-orange" id="Next">Next</a></li>
+                    </ul>
+                </nav>
+            </div>
+            }
+            @Html.Hidden("CurrentPage", 1,new { @id = "CurrentPage" });
+        </div>
+    </div>
+
+   
+
+
+</div>
+
+@section scripts 
+    {
+    
+    <script>
+        function renderProductMarkup(data) {
+         return `<div class="cart-grid">`+
+                        `<div class="img">`+
+
+                            `<img style="object-fit:contain;height:220px" src="@System.Configuration.ConfigurationManager.AppSettings["Url"]/${data.imageName}" alt="No image available :(">`+
+                        `</div>`
+            +
+                        `<ul class="info">
+                            <li style="display:block;margin-top:.5rem">${data.name}</li>
+                            <li style="display:block;margin-top:.5rem">$${data.price}</li>
+                        </ul>
+                        `+
+                        `<div class="snipcart-details ">
+
+                            <button class="addToCart button w3l-cart" data-id="${data.product_id}">add to cart</button>
+
+                        </div>
+         </div>`
+        }
+        function loadSearchedProducts(data) {
+            $("#cardContainer").empty();
+           
+            for (var prop in data) {
+                var markup = renderProductMarkup(data[prop]);
+
+                $("#cardContainer").append(markup);
+            }
+            ;
+
+            $(".totalResults").text(` ${data.length} results for "${$("#keywords").val()}"`)
+        }
+
+        function updateAddToCartCount() {
+            var cookie = $.cookie("CartProducts");
+
+            if (cookie === undefined)
+                $("#cartCount").text("0");
+            else
+            $("#cartCount").text(`${$.cookie("CartProducts").split("-").length}`);
+        }
+        function getFilteredProducts(filteredList,keywords,orderBy,min,max,sortAscending,currentPage) {
+            $.ajax({
+                type: "GET",
+                headers: { 'Access-Control-Allow-Origin': '*' },
+                crossDomain: true,
+                url: '@Model.ServerUrl' + "/Buyer/GetFilteredProducts/",
+                data: {
+                    'Categories': filteredList,
+                    'keywords': keywords,
+                    'orderBy': orderBy,
+                    'min': min,
+                    'max': max,
+                    'sortAscending': sortAscending,
+                    'page': currentPage
+                },
+                success: function (data) {
+                     loadSearchedProducts(data);
+                }
+            });
+        }
+
+        $(function () {
+
+             $(".pagination").find(`#1`).addClass("active");
+            
+             $(".pagination-div").on("click", function (e) {
+                var currentPage = parseInt($("#CurrentPage").val());
+               
+                if (e.target.id == "Prev") {
+                    if (currentPage != 1) {
+                        
+                        currentPage -= 1;
+                        $("#CurrentPage").val(currentPage);
+                        var activeId = $(".pagination").find(".active").attr("id");
+                        $(".pagination").find(`#${activeId}`).removeClass("active");
+                        $(".pagination").find(`#${currentPage}`).addClass("active");
+                        if (currentPage == 1)
+                            $(".pagination").find(`#Prev`).css("color", "gray");
+                        getFilteredProducts(filtersList, keywords, orderBy, min, max, sortAscending, currentPage);
+
+                    };
+                }
+                else if (e.target.id == "Next") {
+                    $(".pagination").find(`#Prev`).css("color", "black");
+                    currentPage += 1;
+                    $("#CurrentPage").val(currentPage);
+                    var activeId = $(".pagination").find(".active").attr("id");
+                    $(".pagination").find(`#${activeId}`).removeClass("active");
+                    $(".pagination").find(`#${currentPage}`).addClass("active");
+                    getFilteredProducts(filtersList, keywords, orderBy, min, max, sortAscending, currentPage);
+                }
+            });
+            $("#orderBy").on("change", function (e) {   
+                orderBy = $("#orderBy option:selected").val();
+                getFilteredProducts(filtersList, keywords, orderBy, min, max, sortAscending);
+            });
+            $("#btn-search-product").on("click", function (e) {
+                keywords = $("#keywords").val();
+                getFilteredProducts(filtersList, keywords, orderBy, min, max, sortAscending);       
+            });
+
+            $(".category-div").on("change", ".category-check", function (e) {
+               
+                if (this.checked) {
+                    filtersList.push(this.name);
+                    getFilteredProducts(filtersList, keywords, orderBy, min, max, sortAscending);
+                }
+                else {
+
+                    filtersList.splice(filtersList.findIndex(x => x == this.name), 1);
+                    getFilteredProducts(filtersList, keywords, orderBy, min, max, sortAscending);
+
+                }
+            });
+
+            $("#price-btn").on("click", function (e) {
+                 min = $("#min-price").val();
+                 max = $("#max-price").val();
+                getFilteredProducts(filtersList, keywords, orderBy, min, max, sortAscending);
+            });
+
+            $("#btn-sort").on('click', function (e) {
+                if (sortAscending == false) {
+                    sortAscending = true;
+                    $("#sort-down").css("display", "none");
+                    $("#sort-up").css("display", "inline-block");
+                  
+                }
+                else if (sortAscending == true) {
+                    sortAscending = false;
+                    $("#sort-down").css("display", "inline-block");
+                    $("#sort-up").css("display", "none");
+                    
+                }
+                getFilteredProducts(filtersList, keywords, orderBy, min, max, sortAscending);
+                    
+            })
+
+            var filtersList = [];
+            var keywords;
+            var min;
+            var max;
+            var orderBy;
+            var sortAscending = true;
+
+
+            var displayedProducts = [];
+            var productsIDs = [];
+            var cookie = $.cookie("CartProducts");
+            var expdate = new Date();
+            expdate.setDate(expdate.getDate() + 20);
+
+            $.cookie("CartProducts", cookie, { path: '/', expires: expdate });
+
+            if (cookie !== undefined) {
+
+                productsIDs = cookie.split("-").map(val => parseInt(val));
+
+            }
+
+
+             $("#cardContainer").on("click", ".addToCart", (e) => {
+               //check if exists in cart
+               //if doesnt exist then push to cookie and give teal class
+               //if exists then remove from cookie and remove teal class
+                var item = e.target;
+                if ((productsIDs.findIndex(id => item.getAttribute("data-id") == id)) == -1) {
+                    productsIDs.push(e.target.getAttribute("data-id"));
+                    $.cookie("CartProducts", productsIDs.join("-"), { path: '/', expires: 10 });
+                    $(item).text("Remove From Cart");
+                    $(item).addClass("text-order");
+                    $.toast({
+                          text: "Item was sucessfully added!", // Text that is to be shown in the toast
+                          heading: 'Cart Updated', // Optional heading to be shown on the toast
+                            icon: 'success', // Type of toast icon
+                            showHideTransition: 'fade', // fade, slide or plain
+                            allowToastClose: true, // Boolean value true or false
+                            hideAfter: 3000, // false to make it sticky or number representing the miliseconds as time after which toast needs to be hidden
+                            stack: 5, // false if there should be only one toast at a time or a number representing the maximum number of toasts to be shown at a time
+                            position: 'bottom-left', // bottom-left or bottom-right or bottom-center or top-left or top-right or top-center or mid-center or an object representing the left, right, top, bottom values
+                            textAlign: 'left',  // Text alignment i.e. left, right or center
+                            loader: true,  // Whether to show loader or not. True by default
+                            loaderBg: '#9EC600',  // Background color of the toast loader
+                            
+                    });
+      
+                    updateAddToCartCount();
+                }
+                else {
+                    var itemIndex = productsIDs.findIndex((value) => {
+                        return item.getAttribute("data-id") == value;
+                    });
+                    productsIDs.splice(itemIndex, 1);
+                    $(item).text("Add To Cart");
+                    $(item).removeClass("text-order");
+                    if (productsIDs.length == 0) {
+                        $.removeCookie('CartProducts', { path: '/' });
+                    }
+                    else
+                        $.cookie("CartProducts", productsIDs.join("-"), { path: '/' });
+                    $.toast({
+                          text: "Item was sucessfully removed!", // Text that is to be shown in the toast
+                          heading: 'Cart Updated', // Optional heading to be shown on the toast
+                            icon: 'warning', // Type of toast icon
+                            showHideTransition: 'fade', // fade, slide or plain
+                            allowToastClose: true, // Boolean value true or false
+                            hideAfter: 3000, // false to make it sticky or number representing the miliseconds as time after which toast needs to be hidden
+                            stack: 5, // false if there should be only one toast at a time or a number representing the maximum number of toasts to be shown at a time
+                            position: 'bottom-left', // bottom-left or bottom-right or bottom-center or top-left or top-right or top-center or mid-center or an object representing the left, right, top, bottom values
+                            textAlign: 'left',  // Text alignment i.e. left, right or center
+                            loader: true,  // Whether to show loader or not. True by default
+                            loaderBg: '#9EC600',  // Background color of the toast loader
+                            
+                    });
+
+                    updateAddToCartCount();
+                }
+
+            })
+
+
+        });
+    </script>
+    
+    }
+
+

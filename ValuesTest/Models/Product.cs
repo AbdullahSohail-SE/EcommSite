@@ -21,6 +21,8 @@ namespace Web.Models
         [Display(Name = "Description")]
         [Required]
         public string description { get; set; }
+        public string imageName { get; set; }
+
 
     }
 

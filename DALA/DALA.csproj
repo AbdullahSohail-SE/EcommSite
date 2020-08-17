@@ -34,6 +34,7 @@
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Web" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -42,13 +43,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AddressDTO.cs" />
     <Compile Include="AuthenticationStatus.cs" />
     <Compile Include="DBManager.cs" />
     <Compile Include="OrderDetailDTO.cs" />
     <Compile Include="OrderProductDTO.cs" />
     <Compile Include="ProductDTO.cs" />
     <Compile Include="ProductPurchaseDTO.cs" />
+    <Compile Include="ProductsWithPagination.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SearchedProductsDTO.cs" />
     <Compile Include="UserDto.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

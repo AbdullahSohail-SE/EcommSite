@@ -1,0 +1,97 @@
+﻿@model Web.Models.BaseModel
+@{
+    ViewBag.Title = "ShowAddresses";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+    <div class="content-header  d-flex">
+        <h2 class="text-teal mt-2" style="margin-left:50%;transform:translateX(-50%)">Your Shipping Addresses</h2>
+    </div>
+    <div class="content mt-4">
+        <div class="col-6 mx-auto">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row p-2">
+                        <h6 class="text-teal col-10">Address</h6>
+                        <h6 class="text-teal col-2">Delete</h6>
+                    </div>
+                    <hr />
+                    <div class="row align-items-center AddressDiv justify-content-center">
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 py-3 text-center mx-auto">
+            <button id="addAddressBtn" class="btn btn-outline-primary"><i class="fas fa-plus-circle mx-2"></i>Add New Address</button>
+        </div>
+    </div>
+@section Scripts
+    {
+    <script>
+        function renderAddress(data) {
+            
+            return `<div class="AddressHolder my-2 row col-12"><span class="col-10">${data.Address}</span><span class="text-center col-2" data-id="${data.Id}"><i class="fas fa-trash-alt text-red remove-address-icon"></i></span></div>`;
+            
+            
+        };
+        $(function () {
+            
+            $.ajax({
+                url: "@Model.ServerUrl" + "/User/GetUserAddresses",
+                headers: { 'Access-Control-Allow-Origin': '*' },
+                crossDomain: true,
+                success: function (data) {
+                    
+                    var result = JSON.parse(data);
+                    if (result.length == 0) {
+                        $(".AddressDiv").append("<div class='text-center'>No Addresses!</div>");
+                    }
+                    for (var prop in result) {
+                        
+                        $(".AddressDiv").append(renderAddress(result[prop]));
+                    }
+                }
+            });
+            
+            $(".AddressDiv").on("click", ".remove-address-icon", function (e) {
+
+                $.ajax({
+                    headers: { 'Access-Control-Allow-Origin': '*' },
+                    crossDomain: true,
+                    url: "@Model.ServerUrl" + "/User/DeleteUserAddress?" + "id=" + $(this).parent("span").data("id"),
+                    success: function (data) {
+                        bootbox.alert("Deleted!");
+                        setTimeout(function () {
+                            location.reload(true);
+                        },2000)
+                        
+                    }
+                });
+                
+            });
+
+            $("#addAddressBtn").on("click", function () {
+                bootbox.prompt("Enter address details!", function (value) {
+                    $.ajax({
+                        url: "@Model.ServerUrl" + "/User/AddUserAddress",
+                        type:"POST",
+                        headers: { 'Access-Control-Allow-Origin': '*' },
+                        crossDomain: true,
+                        data: {
+                            "address": value
+                        },
+                        success: function (data) {
+                            location.reload(true);
+                        },
+                        error: function () {
+                            bootbox.alert("Some Error Occured :(", (s) => { });
+                        }
+                    });
+                });
+                });
+            
+        });
+        
+    </script>
+    }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Configuration;
 using System.Data;
+using System.Web;
 
 
 namespace DALA
@@ -13,11 +14,13 @@ namespace DALA
         private SqlConnection _sqlConn;
         public DBManager(string conn)
         {
-            var connectionString = ConfigurationManager.ConnectionStrings[conn].ConnectionString;
+            
+            var connectionString = ConfigurationManager.ConnectionStrings["ValuesTests"].ConnectionString;
             _sqlConn = new SqlConnection(connectionString);
 
         }
-        public int AddNewProduct(ProductDTO product)
+        
+        public object AddNewProduct(ProductDTO product)
         {
             using (var cmd = new SqlCommand("AddProduct", _sqlConn))
             {
@@ -27,81 +30,219 @@ namespace DALA
                 cmd.Parameters.Add("@price", System.Data.SqlDbType.Float).Value = product.price;
                 cmd.Parameters.Add("@category", System.Data.SqlDbType.VarChar).Value = product.category;
                 cmd.Parameters.Add("@description", System.Data.SqlDbType.VarChar).Value = product.description;
-                cmd.Parameters.Add("@product_id", System.Data.SqlDbType.TinyInt).Direction = System.Data.ParameterDirection.Output;
+                cmd.Parameters.Add("@imageName", System.Data.SqlDbType.VarChar).Value = product.imageName;
+                cmd.Parameters.Add("@default_path", System.Data.SqlDbType.VarChar).Value = ConfigurationManager.AppSettings["UserImagePath"].ToString();
+                cmd.Parameters.Add("@product_id", System.Data.SqlDbType.Int).Direction = System.Data.ParameterDirection.Output;
+                cmd.Parameters.Add("@image_id", System.Data.SqlDbType.Int).Direction = System.Data.ParameterDirection.Output;
 
 
                 _sqlConn.Open();
                 cmd.ExecuteNonQuery();
                 var product_id = Convert.ToInt32(cmd.Parameters["@product_id"].Value);
+                var image_id = Convert.ToInt32(cmd.Parameters["@image_id"].Value);
                 _sqlConn.Close();
 
-                return product_id;
+                return new { productId=product_id, imageId=image_id };
             }
         }
-        public List<ProductDTO> GetProducts()
+
+ 
+
+        public ProductsWithPagination GetFilteredProducts(List<string> categories, string keywords, int? min, int? max, string orderBy, bool? sortAscending,int page)
         {
             var products = new List<ProductDTO>();
-            using (var cmd = new SqlCommand("GetProducts", _sqlConn))
+            int pages;
+            using (var cmd=new SqlCommand("GetFilteredProducts",_sqlConn))
             {
-                cmd.CommandType = System.Data.CommandType.StoredProcedure;
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.Add("@totalPages", SqlDbType.Int).Direction = ParameterDirection.Output;
+                var table = new DataTable();
+                table.Columns.Add(new DataColumn("Category", typeof(string)));
 
-                _sqlConn.Open();
-                var reader = cmd.ExecuteReader();
-                if (reader.HasRows)
+                if (categories == null || categories.Count == 0)
                 {
-                    while (reader.Read())
-                    {
-                        var product_id = reader.GetInt32(0);
-                        var name = reader.GetString(1);
-                        var price = reader.GetDouble(2);
-                        var category = reader.GetString(3);
-                        var description = reader.GetString(4);
-
-                        products.Add(new ProductDTO() { name = name, price = price, description = description, category = category, product_id = product_id });
-                    }
+                    categories = GetCategories();
                 }
-                _sqlConn.Close();
-            }
-            return products;
+                foreach (var category in categories)
+                {
+                    table.Rows.Add(category);
+                }
 
-        }
-
-        public void DeleteProduct(int id)
-        {
-            using (var cmd = new SqlCommand("DeleteProduct", _sqlConn))
-            {
-                cmd.CommandType = System.Data.CommandType.StoredProcedure;
-                cmd.Parameters.Add("@product_id", System.Data.SqlDbType.Int).Value = id;
+                var parameter = cmd.Parameters.AddWithValue("@CategoriesList", table);
+                parameter.SqlDbType = SqlDbType.Structured;
+                parameter.TypeName = "CategoriesList";
+                cmd.Parameters.Add("@keywords", SqlDbType.VarChar).Value = keywords ?? "";
+                cmd.Parameters.Add("@min", SqlDbType.Int).Value = min;
+                cmd.Parameters.Add("@max", SqlDbType.Int).Value = max;
+                cmd.Parameters.Add("@orderBy", SqlDbType.VarChar).Value = orderBy;
+                cmd.Parameters.Add("@sortAscending", SqlDbType.Bit).Value = sortAscending;
+                cmd.Parameters.Add("@pg_no", SqlDbType.Int).Value = page;
                 _sqlConn.Open();
-                cmd.ExecuteNonQuery();
+                using (var reader = cmd.ExecuteReader())
+                {
+                    if (reader.HasRows)
+                        while (reader.Read())
+                        {
+                            var product_id = reader.GetInt32(0);
+                            var name = reader.GetString(1);
+                            var price = reader.GetDouble(2);
+                            var category = reader.GetString(3);
+                            var description = reader.GetString(4);
+                            var imageDir = reader.GetString(7);
+
+                            products.Add(new ProductDTO() { name = name, price = price, description = description, category = category, product_id = product_id, imageName = imageDir });
+                        }
+                }
+                pages = Convert.ToInt32(cmd.Parameters["@totalPages"].Value);
                 _sqlConn.Close();
             }
+            return new ProductsWithPagination { List = products, TotalPages = pages };
         }
-        public List<ProductDTO> SearchByKeywords(string keywords)
+
+        public List<ProductDTO> GetProductsByCategories(List<string> Categories)
         {
             var list = new List<ProductDTO>();
-            using (var cmd = new SqlCommand("GetProductsByKeyword", _sqlConn))
+            using (var cmd=new SqlCommand("GetProductsByCategories",_sqlConn))
             {
-                cmd.CommandType = System.Data.CommandType.StoredProcedure;
-                cmd.Parameters.Add("@search", System.Data.SqlDbType.VarChar).Value = keywords;
+                cmd.CommandType = CommandType.StoredProcedure;
 
+                var table = new DataTable();
+                table.Columns.Add(new DataColumn("Category",typeof(string)));
+                foreach (var category in Categories)
+                {
+                    table.Rows.Add(category);
+                }
+
+                var parameter = cmd.Parameters.AddWithValue("@CategoriesList", table);
+                parameter.SqlDbType = SqlDbType.Structured;
+                parameter.TypeName = "CategoriesList";
+
+                _sqlConn.Open();
+                using (var reader=cmd.ExecuteReader())
+                {
+                    if(reader.HasRows)
+                        while (reader.Read())
+                        {
+                            var product_id = reader.GetInt32(0);
+                            var name = reader.GetString(1);
+                            var price = reader.GetDouble(2);
+                            var category = reader.GetString(3);
+                            var description = reader.GetString(4);
+
+                            list.Add(new ProductDTO()
+                            {
+                                product_id = product_id,
+                                name = name,
+                                price = price,
+                                category = category,
+                                description = description
+                            });
+                        }
+                }
+                _sqlConn.Close();
+                
+            }
+            return list;
+
+        }
+        public List<string> GetCategories()
+        {
+            List<string> list=new List<string>();
+            using (var cmd=new SqlCommand("GetCategories",_sqlConn))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
                 _sqlConn.Open();
                 var reader = cmd.ExecuteReader();
                 if (reader.HasRows)
                 {
                     while (reader.Read())
                     {
-                        var product_id = reader.GetInt32(0);
-                        var name = reader.GetString(1);
-                        var price = reader.GetDouble(2);
-                        var category = reader.GetString(3);
-                        var description = reader.GetString(4);
-                        list.Add(new ProductDTO() { product_id = product_id, name = name, category = category, price = price, description = description });
+                        var category = reader.GetString(0);
+                        list.Add(category);
                     }
                 }
                 _sqlConn.Close();
             }
             return list;
+        }
+        public ProductsWithPagination GetProducts()
+        {
+            var products = new List<ProductDTO>();
+            int pages;
+            using (var cmd = new SqlCommand("GetProducts", _sqlConn))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.Add("@totalPages", SqlDbType.Int).Direction = ParameterDirection.Output;
+
+                _sqlConn.Open();
+                var reader = cmd.ExecuteReader();
+                if (reader.HasRows)
+                {
+                    while (reader.Read())
+                    {
+                        var product_id = reader.GetInt32(0);
+                        var name = reader.GetString(1);
+                        var price = reader.GetDouble(2);
+                        var category = reader.GetString(3);
+                        var description = reader.GetString(4);
+                        var imageDir = reader.GetString(7);
+
+                        products.Add(new ProductDTO() { name = name, price = price, description = description, category = category, product_id = product_id, imageName = imageDir });
+                    }
+                }
+                reader.Close();
+                 pages= Convert.ToInt32(cmd.Parameters["@totalPages"].Value);
+                _sqlConn.Close();
+            }
+            return new ProductsWithPagination { List = products, TotalPages = pages };
+
+        }
+
+        public string DeleteProduct(int id)
+        {
+            string dir;
+            using (var cmd = new SqlCommand("DeleteProduct", _sqlConn))
+            {
+                cmd.CommandType =CommandType.StoredProcedure;
+                cmd.Parameters.Add("@product_id",SqlDbType.Int).Value = id;
+                cmd.Parameters.Add("@image_dir", SqlDbType.VarChar,255).Direction = ParameterDirection.Output;
+                _sqlConn.Open();
+                cmd.ExecuteNonQuery();
+                dir = Convert.ToString(cmd.Parameters["@image_dir"].Value);
+                _sqlConn.Close();
+            }
+            return dir;
+        }  
+        public List<ProductDTO> SearchByKeywords(string keywords)
+        {
+            
+            var list = new List<ProductDTO>();
+            using (var cmd = new SqlCommand("GetProductsByKeyword", _sqlConn))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.Add("@search", System.Data.SqlDbType.VarChar).Value = keywords;
+                cmd.Parameters.Add("@totalResults", SqlDbType.Int).Direction = ParameterDirection.Output;
+
+                _sqlConn.Open();
+                var reader = cmd.ExecuteReader();
+                if (reader.HasRows)
+                {
+                    while (reader.Read())
+                    {
+                        var product_id = reader.GetInt32(0);
+                        var name = reader.GetString(1);
+                        var price = reader.GetDouble(2);
+                        var category = reader.GetString(3);
+                        var description = reader.GetString(4);
+                        var image = reader.GetString(7);
+                        list.Add(new ProductDTO() { product_id = product_id, name = name, category = category, price = price, description = description ,imageName = image});
+                    }
+                }
+                
+                _sqlConn.Close();
+            }
+            return list;
+            
         }
 
         public ProductDTO GetProduct(int productId)
@@ -189,7 +330,7 @@ namespace DALA
                 {
                     IdsTable.Rows.Add(id);
                 }
-                sqlCmd.CommandType = System.Data.CommandType.StoredProcedure;
+                sqlCmd.CommandType = CommandType.StoredProcedure;
                 var parameter = sqlCmd.Parameters.AddWithValue("@IDslist", IdsTable);
                 parameter.SqlDbType = SqlDbType.Structured;
                 parameter.TypeName = "dbo.IDList";
@@ -373,7 +514,97 @@ namespace DALA
             }
         }
 
+        public List<AddressDTO> GetUserAddresses(int UserId)
+        {
+            var list = new List<AddressDTO>();
+            using (var cmd=new SqlCommand("GetUserAddresses",_sqlConn))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.Add("UserId", SqlDbType.Int).Value = UserId;
+                _sqlConn.Open();
 
+                using (var reader=cmd.ExecuteReader())
+                {
+                    if (reader.HasRows)
+                    {
+                        while (reader.Read())
+                        {
+                            list.Add(new AddressDTO
+                            {
+                                Id = reader.GetInt32(0),
+                                UserId = reader.GetInt32(1),
+                                Address = reader.GetString(2),
+                                Name = reader.GetString(3),
+                                Email = reader.GetString(4),
+                                Password = reader.GetString(5)
+                            });
+                        }
+                    }
+                }
+                _sqlConn.Close();
+            }
+            return list;
+        }
+
+        public bool DeleteUserAddress(int UserId,int AddressId)
+        {
+            using (var cmd=new SqlCommand("DeleteUserAddress",_sqlConn))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.Add("@UserId", SqlDbType.Int).Value = UserId;
+                cmd.Parameters.Add("@AddressId", SqlDbType.Int).Value = AddressId;
+
+                _sqlConn.Open();
+                try
+                {
+                    cmd.ExecuteNonQuery();
+                    _sqlConn.Close();
+                    return true;
+                }
+                catch (Exception)
+                {
+
+                    _sqlConn.Close();
+                    return false;
+                }
+                
+            }
+        }
+
+        public int AddUserAddress(int UserId,string address)
+        {
+            int addressId;
+            using (var cmd=new SqlCommand("AddUserAddress",_sqlConn))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.Add("@UserId", SqlDbType.Int).Value = UserId;
+                cmd.Parameters.Add("@Address", SqlDbType.VarChar).Value = address;
+                cmd.Parameters.Add("@AddressId", SqlDbType.Int).Direction = ParameterDirection.Output;
+
+                
+                _sqlConn.Open();
+                cmd.ExecuteNonQuery();
+                addressId=Convert.ToInt32(cmd.Parameters["@AddressId"].Value);
+                _sqlConn.Close();
+            }
+            return addressId;
+        }
+
+        public bool CheckIfAdmin(string email)
+        {
+            bool isAdmin;
+            using (var cmd= new SqlCommand("CheckIfAdmin",_sqlConn))
+            {
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.Add("@email", SqlDbType.VarChar).Value = email;
+                cmd.Parameters.Add("@isAdmin", SqlDbType.Bit).Direction = ParameterDirection.Output;
+                _sqlConn.Open();
+                cmd.ExecuteNonQuery();
+                 isAdmin= Convert.ToBoolean(cmd.Parameters["@isAdmin"].Value);
+                _sqlConn.Close();
+            }
+            return isAdmin;
+        }
     }
 
 }
